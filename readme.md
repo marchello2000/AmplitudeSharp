@@ -1,6 +1,9 @@
 ﻿# AmplitudeSharp
 A simple to use Amplitude analytics logging library for C#
 
+[![Build status](https://ci.appveyor.com/api/projects/status/4qsr9ida4dmy9fji?svg=true)](https://ci.appveyor.com/project/marchello2000/amplitudesharp)
+
+
 **NOTE:** this library is early development stages, many changes are planned (including better documentation) use at your own risk
 
 ## Features
@@ -12,7 +15,7 @@ A simple to use Amplitude analytics logging library for C#
 ## Setup
 1. If you don't have an Amplitude account already, head over to [Amplitude](https://amplitude.com/signup) and create an account.
 2. Once created, note your project API key, you can find this information in [Settings > Projects](https://analytics.amplitude.com/settings/projects) section, note each project will have a different API key. I also recommend that you have `dev` and `prod` environments/projects.
-3. Install the nuget package
+3. Install the [nuget package](https://www.nuget.org/packages/AmplitudeSharp/)
 4. Initialize the library on app start and uninitialize the library when the app quits (here is a WPF app example):
 
 ```cs
