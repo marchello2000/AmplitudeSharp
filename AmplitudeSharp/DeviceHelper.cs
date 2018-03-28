@@ -38,6 +38,7 @@ namespace AmplitudeSharp
             }
             catch (Exception ex)
             {
+                AmplitudeService.s_logger(LogLevel.Warning, $"Failed to get device make/model: {ex.ToString()}");
             }
 
             try
@@ -51,6 +52,7 @@ namespace AmplitudeSharp
             }
             catch (Exception ex)
             {
+                AmplitudeService.s_logger(LogLevel.Warning, $"Failed to get device RAM size: {ex.ToString()}");
             }
 
             Is64BitDevice = Environment.Is64BitOperatingSystem;

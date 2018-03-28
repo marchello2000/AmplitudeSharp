@@ -52,6 +52,7 @@
     <Compile Include="Api\AmplitudeIdentify.cs" />
     <Compile Include="Api\AmplitudeEvent.cs" />
     <Compile Include="Api\IAmplitudeEvent.cs" />
+    <Compile Include="LogLevel.cs" />
     <Compile Include="Utils\CollectionExtensions.cs" />
     <Compile Include="Utils\DateTimeExtensions.cs" />
     <Compile Include="DeviceHelper.cs" />
@@ -63,7 +64,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="readme.md" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

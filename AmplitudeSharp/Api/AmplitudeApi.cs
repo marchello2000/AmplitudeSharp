@@ -110,9 +110,15 @@ namespace AmplitudeSharp.Api
                         }
                     }
                 }
+                catch (HttpRequestException)
+                {
+                    // Ignore connection errors
+                    result = SendResult.ServerError;
+                }
                 catch (Exception e)
                 {
                     result = SendResult.ServerError;
+                    AmplitudeService.s_logger(LogLevel.Warning, $"Failed to get device make/model: {e.ToString()}");
                 }
             }
 

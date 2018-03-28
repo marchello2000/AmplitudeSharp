@@ -13,6 +13,8 @@ namespace AmplitudeSharp
     public class AmplitudeService : IDisposable
     {
         public static AmplitudeService s_instance;
+        internal static Action<LogLevel, string> s_logger;
+
         public static AmplitudeService Instance
         {
             get
@@ -64,8 +66,9 @@ namespace AmplitudeSharp
         /// </summary>
         /// <param name="apiKey">api key for the project to stream data to</param>
         /// <param name="persistenceStream">optinal, stream with saved event data <seealso cref="Uninitialize(Stream)"/></param>
+        /// <param name="logger">Action delegate for logging purposes, if none is specified <see cref="System.Diagnostics.Debug.WriteLine(object)"/> is used</param>
         /// <returns></returns>
-        public static AmplitudeService Initialize(string apiKey, Stream persistenceStream = null)
+        public static AmplitudeService Initialize(string apiKey, Action<LogLevel, string> logger = null, Stream persistenceStream = null)
         {
             if (apiKey == "<YOUR_API_KEY>")
             {
@@ -77,6 +80,13 @@ namespace AmplitudeSharp
 
             if (Interlocked.CompareExchange(ref s_instance, instance, null) == null)
             {
+                if (logger == null)
+                {
+                    logger = (level, message) => { System.Diagnostics.Debug.WriteLine($"Analytics: [{level}] {message}"); };
+                }
+
+                s_logger = logger;
+
                 instance.StartSendThread();
 
                 if (persistenceStream != null)
@@ -203,8 +213,9 @@ namespace AmplitudeSharp
                         writer.Write(persistedData);
                     }
                 }
-                catch
+                catch (Exception e)
                 {
+                    AmplitudeService.s_logger(LogLevel.Error, $"Failed to persist events: {e.ToString()}");
                 }
             }
         }
@@ -222,8 +233,9 @@ namespace AmplitudeSharp
                     eventsReady.Release();
                 }
             }
-            catch
+            catch (Exception e)
             {
+                AmplitudeService.s_logger(LogLevel.Error, $"Failed to load persisted events: {e.ToString()}");
             }
         }
 

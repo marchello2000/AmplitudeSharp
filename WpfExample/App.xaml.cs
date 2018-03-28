@@ -18,7 +18,7 @@ namespace WpfExample
             {
                 using (var s = File.OpenRead("event.store"))
                 {
-                    analytics = AmplitudeService.Initialize(AmplitudeApiKey, s);
+                    analytics = AmplitudeService.Initialize(AmplitudeApiKey, persistenceStream: s);
                 }
             }
             else
