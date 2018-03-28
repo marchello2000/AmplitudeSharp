@@ -1,0 +1,24 @@
+version: 1.0.{build}
+image: Visual Studio 2017
+configuration: Release
+assembly_info:
+  patch: true
+  file: '**\AssemblyInfo.*'
+  assembly_version: '{version}'
+  assembly_file_version: '{version}'
+  assembly_informational_version: '{version}'
+before_build:
+- cmd: nuget restore
+build:
+  verbosity: minimal
+after_test:
+- cmd: nuget pack AmplitudeSharp\AmplitudeSharp.csproj -Version %APPVEYOR_BUILD_VERSION%
+artifacts:
+- path: AmplitudeSharp*.nupkg
+  name: nupkg
+deploy:
+- provider: NuGet
+  api_key:
+    secure: +sMQTaMnX9bGtSZ9x+ilPEPtk8P3djmk62KP6ViQaSoQQbDuYDPODo/Vbc+Lzhfs
+  skip_symbols: true
+  artifact: nupkg
