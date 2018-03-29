@@ -1,7 +1,7 @@
 ﻿# AmplitudeSharp
 A simple to use Amplitude analytics logging library for C#
 
-[![Build status](https://ci.appveyor.com/api/projects/status/4qsr9ida4dmy9fji?svg=true)](https://ci.appveyor.com/project/marchello2000/amplitudesharp) [![NuGet](https://img.shields.io/nuget/dt/AmplitudeSharp.svg)](https://www.nuget.org/packages/AmplitudeSharp/)
+[![Build status](https://ci.appveyor.com/api/projects/status/4qsr9ida4dmy9fji?svg=true)](https://ci.appveyor.com/project/marchello2000/amplitudesharp) [![NuGet](https://img.shields.io/nuget/v/AmplitudeSharp.svg)](https://www.nuget.org/packages/AmplitudeSharp/)
 
 
 
