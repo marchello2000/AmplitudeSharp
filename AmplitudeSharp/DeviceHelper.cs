@@ -10,6 +10,7 @@ namespace AmplitudeSharp
         private static Dictionary<string, string> WindowsVersions = new Dictionary<string, string>()
         {
             { "5.1", "Windows XP" },
+            { "5.2", "Windows Server 2003" },
             { "6.0", "Windows Vista" },
             { "6.1", "Windows 7" },
             { "6.2", "Windows 8" },
@@ -43,6 +44,24 @@ namespace AmplitudeSharp
 
             try
             {
+                var mc = new ManagementClass("Win32_OperatingSystem");
+                foreach (ManagementObject mo in mc.GetInstances())
+                {
+                    OSVersion = mo["Version"].ToString();
+                    break;
+                }
+            }
+            catch (Exception ex)
+            {
+                OSVersion = Environment.OSVersion.Version.ToString();
+                AmplitudeService.s_logger(LogLevel.Warning, $"Failed to get OS Version from WMI, using Environment which may not be accurate: {ex.ToString()}");
+            }
+
+            string majorMinor = new Version(OSVersion).ToString(2);
+            OSName = WindowsVersions.TryGet(majorMinor, "Windows");
+
+            try
+            {
                 var memStatus = new NativeMethods.MEMORYSTATUSEX();
                 if (NativeMethods.GlobalMemoryStatusEx(memStatus))
                 {
@@ -56,9 +75,6 @@ namespace AmplitudeSharp
             }
 
             Is64BitDevice = Environment.Is64BitOperatingSystem;
-            string majorMinor = Environment.OSVersion.Version.ToString(2);
-            OSName = WindowsVersions.TryGet(majorMinor, "Windows");
-            OSVersion = Environment.OSVersion.Version.ToString();
         }
     }
 }
