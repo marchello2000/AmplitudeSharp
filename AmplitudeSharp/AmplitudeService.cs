@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Threading;
@@ -179,16 +180,27 @@ namespace AmplitudeSharp
         /// <param name="properties">parameters for the event (this can just be a dynamic class)</param>
         public void Track(string eventName, object properties)
         {
-            AmplitudeEvent e = new AmplitudeEvent(eventName, properties)
-            {
-                SessionId = sessionId
-            };
-
             var identification = this.identification;
-            e["user_id"] = identification.UserId;
-            e["device_id"] = identification.DeviceId;
 
-            QueueEvent(e);
+            if (identification != null)
+            {
+                AmplitudeEvent e = new AmplitudeEvent(eventName, properties)
+                {
+                    SessionId = sessionId
+                };
+
+                e["user_id"] = identification.UserId;
+                e["device_id"] = identification.DeviceId;
+
+                QueueEvent(e);
+            }
+            else
+            {
+                if (Debugger.IsAttached)
+                {
+                    throw new InvalidOperationException("Must call Identify() before logging events");
+                }
+            }
         }
 
         private void QueueEvent(IAmplitudeEvent e)
