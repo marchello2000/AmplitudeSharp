@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading;
 using AmplitudeSharp.Utils;
 using Newtonsoft.Json;
 
@@ -8,6 +9,7 @@ namespace AmplitudeSharp.Api
 {
     public class AmplitudeEvent : Dictionary<string, object>, IAmplitudeEvent
     {
+        private static int s_eventId;
         public static string LibraryVersion;
 
         static AmplitudeEvent()
@@ -67,14 +69,29 @@ namespace AmplitudeSharp.Api
             }
         }
 
+        [JsonIgnore]
+        public int EventId
+        {
+            get
+            {
+                return (int)this.TryGet("event_id");
+            }
+            set
+            {
+                this["event_id"] = value;
+            }
+        }
+
         [JsonProperty(propertyName: "event_properties")]
         public Dictionary<string, object> Properties { get; set; }
 
         public AmplitudeEvent()
         {
+            EventId = Interlocked.Increment(ref s_eventId);
         }
 
         public AmplitudeEvent(string eventName, object eventProperties)
+            : this()
         {
             Time = DateTime.UtcNow.ToUnixEpoch();
             EventType = Uri.EscapeUriString(eventName);
