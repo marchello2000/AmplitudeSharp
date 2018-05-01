@@ -37,7 +37,17 @@ namespace AmplitudeSharp
         /// Sets Offline mode, which means the events are never sent to actual amplitude service
         /// This is meant for testing
         /// </summary>
-        public bool OfflineMode => api.OfflineMode;
+        public bool OfflineMode
+        {
+            get
+            {
+                return api.OfflineMode;
+            }
+            set
+            {
+                api.OfflineMode = value;
+            }
+        }
 
         private AmplitudeService(string apiKey)
         {
