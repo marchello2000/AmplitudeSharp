@@ -31,6 +31,19 @@ namespace AmplitudeSharp.Api
         }
 
         [JsonIgnore]
+        public string DeviceId
+        {
+            get
+            {
+                return this.TryGet("device_id") as string;
+            }
+            set
+            {
+                this["device_id"] = value;
+            }
+        }
+
+        [JsonIgnore]
         public string EventType
         {
             get
@@ -90,7 +103,7 @@ namespace AmplitudeSharp.Api
             EventId = Interlocked.Increment(ref s_eventId);
         }
 
-        public AmplitudeEvent(string eventName, object eventProperties)
+        public AmplitudeEvent(string eventName, object eventProperties, Dictionary<string, object> extraEventProps)
             : this()
         {
             Time = DateTime.UtcNow.ToUnixEpoch();
@@ -100,16 +113,33 @@ namespace AmplitudeSharp.Api
             this["library"] = $"{nameof(AmplitudeSharp)}/{LibraryVersion}";
             this["ip"] = "$remote";
 
+            if (extraEventProps != null && extraEventProps.Count > 0)
+            {
+                if (Properties == null)
+                {
+                    Properties = new Dictionary<string, object>();
+                }
+
+                // Only add extra props that wouldn't overwrite event props
+                foreach (var extraProp in extraEventProps)
+                {
+                    if (!Properties.ContainsKey(extraProp.Key))
+                    {
+                        Properties.Add(extraProp.Key, extraProp.Value);
+                    }
+                }
+            }
+
             if (Properties?.Count > 0)
             {
-                this["event_properties"] = eventProperties;
+                this["event_properties"] = Properties;
             }
         }
 
         /// <summary>
         /// Convert an object to a dictionary
         /// </summary>
-        private Dictionary<string, object> ToDictionary<T>(T obj)
+        static internal Dictionary<string, object> ToDictionary<T>(T obj)
         {
             if (obj != null)
             {

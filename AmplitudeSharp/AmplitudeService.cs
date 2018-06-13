@@ -49,6 +49,11 @@ namespace AmplitudeSharp
             }
         }
 
+        /// <summary>
+        /// Additional properties to send with every event
+        /// </summary>
+        public Dictionary<string, object> ExtraEventProperties { get; private set; } = new Dictionary<string, object>();
+
         private AmplitudeService(string apiKey)
         {
             lockObject = new object();
@@ -194,14 +199,13 @@ namespace AmplitudeSharp
 
             if (identification != null)
             {
-                AmplitudeEvent e = new AmplitudeEvent(eventName, properties)
+                AmplitudeEvent e = new AmplitudeEvent(eventName, properties, ExtraEventProperties)
                 {
                     SessionId = sessionId
                 };
 
-                e["user_id"] = identification.UserId;
-                e["device_id"] = identification.DeviceId;
-
+                e.UserId = identification.UserId;
+                e.DeviceId = identification.DeviceId;
                 QueueEvent(e);
             }
             else
@@ -347,9 +351,10 @@ namespace AmplitudeSharp
                     }
                 }
             }
-            catch
+            catch (Exception e)
             {
                 // No matter what exception happens, we just quit
+                s_logger(LogLevel.Error, "Upload thread terminated with: " + e.ToString());
             }
         }
     }
