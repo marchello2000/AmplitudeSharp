@@ -26,7 +26,6 @@ namespace AmplitudeSharp.Api
 
     class AmplitudeApi : IAmplitudeApi
     {
-
         private string apiKey;
         private HttpClient httpClient;
         private HttpClientHandler httpHandler;
