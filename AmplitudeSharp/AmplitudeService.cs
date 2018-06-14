@@ -351,6 +351,9 @@ namespace AmplitudeSharp
                     }
                 }
             }
+            catch (OperationCanceledException)
+            {
+            }
             catch (Exception e)
             {
                 // No matter what exception happens, we just quit
