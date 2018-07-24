@@ -311,7 +311,7 @@ namespace AmplitudeSharp
                     {
                         AmplitudeApi.SendResult result = await api.SendEvents(eventsToSend);
 
-                        if (result == AmplitudeApi.SendResult.Success)
+                        if (result == AmplitudeApi.SendResult.Success || result == AmplitudeApi.SendResult.ServerError)
                         {
                             // Remove these events from the list:
                             lock (lockObject)
@@ -331,7 +331,7 @@ namespace AmplitudeSharp
                     {
                         AmplitudeApi.SendResult result = await api.Identify(identification);
 
-                        if (result == AmplitudeApi.SendResult.Success)
+                        if (result == AmplitudeApi.SendResult.Success || result == AmplitudeApi.SendResult.ServerError)
                         {
                             // Remove this identify call from the list
                             lock (lockObject)
