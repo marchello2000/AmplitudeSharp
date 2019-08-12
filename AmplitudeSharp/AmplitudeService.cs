@@ -32,6 +32,17 @@ namespace AmplitudeSharp
         private AmplitudeIdentify identification;
         private SemaphoreSlim eventsReady;
         private long sessionId;
+        private readonly JsonSerializerSettings apiJsonSerializerSettings = new JsonSerializerSettings
+        {
+            NullValueHandling = NullValueHandling.Ignore,
+            Formatting = Formatting.None,
+        };
+        private readonly JsonSerializerSettings persistenceJsonSerializerSettings = new JsonSerializerSettings
+        {
+            TypeNameHandling = TypeNameHandling.Objects,
+            NullValueHandling = NullValueHandling.Ignore,
+            Formatting = Formatting.None,
+        };
 
         /// <summary>
         /// Sets Offline mode, which means the events are never sent to actual amplitude service
@@ -52,32 +63,26 @@ namespace AmplitudeSharp
         /// <summary>
         /// Additional properties to send with every event
         /// </summary>
-        public Dictionary<string, object> ExtraEventProperties { get; private set; } = new Dictionary<string, object>();
+        public Dictionary<string, object> ExtraEventProperties { get; } = new Dictionary<string, object>();
 
         private AmplitudeService(string apiKey)
         {
             lockObject = new object();
-            api = new AmplitudeApi(apiKey);
+            api = new AmplitudeApi(apiKey, apiJsonSerializerSettings);
             eventQueue = new List<IAmplitudeEvent>();
             cancellationToken = new CancellationTokenSource();
             eventsReady = new SemaphoreSlim(0);
-
-            JsonConvert.DefaultSettings = () => new JsonSerializerSettings()
-            {
-                NullValueHandling = NullValueHandling.Ignore,
-                Formatting = Formatting.None
-            };
         }
 
         public void Dispose()
-        { 
+        {
             Uninitialize();
             s_instance = null;
         }
 
         /// <summary>
         /// Initialize AmplitudeSharp
-        /// Takes an API key for the project and, optionally, 
+        /// Takes an API key for the project and, optionally,
         /// a stream where offline/past events are stored
         /// </summary>
         /// <param name="apiKey">api key for the project to stream data to</param>
@@ -233,7 +238,7 @@ namespace AmplitudeSharp
             {
                 try
                 {
-                    string persistedData = JsonConvert.SerializeObject(eventQueue, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.Objects });
+                    string persistedData = JsonConvert.SerializeObject(eventQueue, persistenceJsonSerializerSettings);
                     using (var writer = new StreamWriter(persistenceStore))
                     {
                         writer.Write(persistedData);
@@ -241,7 +246,7 @@ namespace AmplitudeSharp
                 }
                 catch (Exception e)
                 {
-                    AmplitudeService.s_logger(LogLevel.Error, $"Failed to persist events: {e.ToString()}");
+                    AmplitudeService.s_logger(LogLevel.Error, $"Failed to persist events: {e}");
                 }
             }
         }
@@ -253,7 +258,7 @@ namespace AmplitudeSharp
                 using (var reader = new StreamReader(persistenceStore))
                 {
                     string persistedData = reader.ReadLine();
-                    var data = JsonConvert.DeserializeObject<List<IAmplitudeEvent>>(persistedData, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.Objects });
+                    var data = JsonConvert.DeserializeObject<List<IAmplitudeEvent>>(persistedData, persistenceJsonSerializerSettings);
 
                     eventQueue.InsertRange(0, data);
                     eventsReady.Release();
@@ -261,7 +266,7 @@ namespace AmplitudeSharp
             }
             catch (Exception e)
             {
-                AmplitudeService.s_logger(LogLevel.Error, $"Failed to load persisted events: {e.ToString()}");
+                AmplitudeService.s_logger(LogLevel.Error, $"Failed to load persisted events: {e}");
             }
         }
 
