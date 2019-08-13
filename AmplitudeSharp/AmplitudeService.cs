@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -31,7 +31,7 @@ namespace AmplitudeSharp
         private AmplitudeApi api;
         private AmplitudeIdentify identification;
         private SemaphoreSlim eventsReady;
-        private long sessionId;
+        private long sessionId = -1;
         private readonly JsonSerializerSettings apiJsonSerializerSettings = new JsonSerializerSettings
         {
             NullValueHandling = NullValueHandling.Ignore,
