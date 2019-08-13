@@ -13,24 +13,18 @@ namespace AmplitudeSharp
 {
     public class AmplitudeService : IDisposable
     {
-        public static AmplitudeService s_instance;
+        private static AmplitudeService s_instance;
         internal static Action<LogLevel, string> s_logger;
 
-        public static AmplitudeService Instance
-        {
-            get
-            {
-                return s_instance;
-            }
-        }
+        public static AmplitudeService Instance => s_instance;
 
-        private object lockObject;
-        private List<IAmplitudeEvent> eventQueue;
-        private CancellationTokenSource cancellationToken;
+        private readonly object lockObject;
+        private readonly List<IAmplitudeEvent> eventQueue;
+        private readonly CancellationTokenSource cancellationToken;
         private Thread sendThread;
-        private AmplitudeApi api;
+        private readonly AmplitudeApi api;
         private AmplitudeIdentify identification;
-        private SemaphoreSlim eventsReady;
+        private readonly SemaphoreSlim eventsReady;
         private long sessionId = -1;
         private readonly JsonSerializerSettings apiJsonSerializerSettings = new JsonSerializerSettings
         {
@@ -50,14 +44,8 @@ namespace AmplitudeSharp
         /// </summary>
         public bool OfflineMode
         {
-            get
-            {
-                return api.OfflineMode;
-            }
-            set
-            {
-                api.OfflineMode = value;
-            }
+            get => api.OfflineMode;
+            set => api.OfflineMode = value;
         }
 
         /// <summary>
@@ -86,7 +74,7 @@ namespace AmplitudeSharp
         /// a stream where offline/past events are stored
         /// </summary>
         /// <param name="apiKey">api key for the project to stream data to</param>
-        /// <param name="persistenceStream">optinal, stream with saved event data <seealso cref="Uninitialize(Stream)"/></param>
+        /// <param name="persistenceStream">optional, stream with saved event data <seealso cref="Uninitialize(Stream)"/></param>
         /// <param name="logger">Action delegate for logging purposes, if none is specified <see cref="System.Diagnostics.Debug.WriteLine(object)"/> is used</param>
         /// <returns></returns>
         public static AmplitudeService Initialize(string apiKey, Action<LogLevel, string> logger = null, Stream persistenceStream = null)
@@ -184,21 +172,13 @@ namespace AmplitudeSharp
             sessionId = DateTime.UtcNow.ToUnixEpoch();
         }
 
-        /// <summary>
-        /// Log an event without any parameters
-        /// </summary>
-        /// <param name="eventName">the name of the event</param>
-        public void Track(string eventName)
-        {
-            Track(eventName, null);
-        }
 
         /// <summary>
         /// Log an event with parameters
         /// </summary>
         /// <param name="eventName">the name of the event</param>
         /// <param name="properties">parameters for the event (this can just be a dynamic class)</param>
-        public void Track(string eventName, object properties)
+        public void Track(string eventName, object properties = null )
         {
             var identification = this.identification;
 
@@ -206,11 +186,11 @@ namespace AmplitudeSharp
             {
                 AmplitudeEvent e = new AmplitudeEvent(eventName, properties, ExtraEventProperties)
                 {
-                    SessionId = sessionId
+                    SessionId = sessionId,
+                    UserId = identification.UserId,
+                    DeviceId = identification.DeviceId,
                 };
 
-                e.UserId = identification.UserId;
-                e.DeviceId = identification.DeviceId;
                 QueueEvent(e);
             }
             else
@@ -266,7 +246,7 @@ namespace AmplitudeSharp
             }
             catch (Exception e)
             {
-                AmplitudeService.s_logger(LogLevel.Error, $"Failed to load persisted events: {e}");
+                s_logger(LogLevel.Error, $"Failed to load persisted events: {e}");
             }
         }
 
@@ -275,9 +255,11 @@ namespace AmplitudeSharp
         /// </summary>
         private void StartSendThread()
         {
-            sendThread = new Thread(UploadThread);
-            sendThread.Name = $"{nameof(AmplitudeSharp)} Upload Thread";
-            sendThread.Priority = ThreadPriority.BelowNormal;
+            sendThread = new Thread(UploadThread)
+            {
+                Name = $"{nameof(AmplitudeSharp)} Upload Thread",
+                Priority = ThreadPriority.BelowNormal,
+            };
             sendThread.Start();
         }
 
@@ -362,7 +344,7 @@ namespace AmplitudeSharp
             catch (Exception e)
             {
                 // No matter what exception happens, we just quit
-                s_logger(LogLevel.Error, "Upload thread terminated with: " + e.ToString());
+                s_logger(LogLevel.Error, "Upload thread terminated with: " + e);
             }
         }
     }

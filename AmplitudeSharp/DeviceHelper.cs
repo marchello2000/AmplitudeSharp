@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Management;
+// TODO(revive): Revive this once .NET Core 3.0 is released
+//using System.Management;
 using AmplitudeSharp.Utils;
 
 namespace AmplitudeSharp
@@ -29,13 +30,14 @@ namespace AmplitudeSharp
         {
             try
             {
-                var mc = new ManagementClass("Win32_ComputerSystem");
-                foreach (ManagementObject mo in mc.GetInstances())
-                {
-                    Manufacturer = mo["Manufacturer"].ToString();
-                    Model = mo["Model"].ToString();
-                    break;
-                }
+                // TODO(revive): Revive this once .NET Core 3.0 is released
+//                var mc = new ManagementClass("Win32_ComputerSystem");
+//                foreach (ManagementObject mo in mc.GetInstances())
+//                {
+//                    Manufacturer = mo["Manufacturer"].ToString();
+//                    Model = mo["Model"].ToString();
+//                    break;
+//                }
             }
             catch (Exception ex)
             {
@@ -44,12 +46,13 @@ namespace AmplitudeSharp
 
             try
             {
-                var mc = new ManagementClass("Win32_OperatingSystem");
-                foreach (ManagementObject mo in mc.GetInstances())
-                {
-                    OSVersion = mo["Version"].ToString();
-                    break;
-                }
+                // TODO(revive): Revive this once .NET Core 3.0 is released
+//                var mc = new ManagementClass("Win32_OperatingSystem");
+//                foreach (ManagementObject mo in mc.GetInstances())
+//                {
+//                    OSVersion = mo["Version"].ToString();
+//                    break;
+//                }
             }
             catch (Exception ex)
             {
@@ -71,7 +74,7 @@ namespace AmplitudeSharp
             }
             catch (Exception ex)
             {
-                AmplitudeService.s_logger(LogLevel.Warning, $"Failed to get device RAM size: {ex.ToString()}");
+                AmplitudeService.s_logger(LogLevel.Warning, $"Failed to get device RAM size: {ex}");
             }
 
             Is64BitDevice = Environment.Is64BitOperatingSystem;
