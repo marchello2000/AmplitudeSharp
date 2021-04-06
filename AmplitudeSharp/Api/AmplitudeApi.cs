@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace AmplitudeSharp.Api
 {
@@ -29,16 +30,18 @@ namespace AmplitudeSharp.Api
         private string apiKey;
         private HttpClient httpClient;
         private HttpClientHandler httpHandler;
+        private readonly JsonSerializerSettings jsonSerializerSettings;
 
-        public AmplitudeApi(string apiKey)
+        public AmplitudeApi(string apiKey, JsonSerializerSettings jsonSerializerSettings)
         {
             this.apiKey = apiKey;
+            this.jsonSerializerSettings = jsonSerializerSettings;
 
-            httpHandler = new HttpClientHandler();
-            httpHandler.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-            httpHandler.Proxy = WebRequest.GetSystemWebProxy();
-            httpHandler.UseProxy = true;
-
+            httpHandler = new HttpClientHandler {
+                AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip,
+                Proxy = WebRequest.GetSystemWebProxy(),
+                UseProxy = true,
+            };
             httpClient = new HttpClient(httpHandler);
         }
 
@@ -49,21 +52,21 @@ namespace AmplitudeSharp.Api
                 httpHandler.Proxy = WebRequest.GetSystemWebProxy();
             }
             else
-            { 
+            {
                 httpHandler.Proxy.Credentials = new NetworkCredential(proxyUserName, proxyPassword);
-            }            
+            }
         }
 
         public override Task<SendResult> Identify(AmplitudeIdentify identification)
         {
-            string data = Newtonsoft.Json.JsonConvert.SerializeObject(identification);
+            string data = JsonConvert.SerializeObject(identification, jsonSerializerSettings);
 
             return DoApiCall("identify", "identification", data);
         }
 
         public override Task<SendResult> SendEvents(List<AmplitudeEvent> events)
         {
-            string data = Newtonsoft.Json.JsonConvert.SerializeObject(events);
+            string data = JsonConvert.SerializeObject(events, jsonSerializerSettings);
 
             return DoApiCall("httpapi", "event", data);
         }
@@ -117,7 +120,7 @@ namespace AmplitudeSharp.Api
                 catch (Exception e)
                 {
                     result = SendResult.ServerError;
-                    AmplitudeService.s_logger(LogLevel.Warning, $"Failed to get device make/model: {e.ToString()}");
+                    AmplitudeService.s_logger(LogLevel.Warning, $"Failed to get device make/model: {e}");
                 }
             }
 

@@ -1,31 +1,33 @@
 ﻿using System;
-using Microsoft.Win32;
+// TODO(revive): Revive this once .NET Core 3.0 is released
+//using Microsoft.Win32;
 
 namespace AmplitudeSharp
 {
     class NetFxHelper
     {
+        // TODO(revive): Revive this once .NET Core 3.0 is released
         /// <summary>
         /// Get the installed .net version as recommended here:
         /// https://msdn.microsoft.com/en-us/library/hh925568%28v=vs.110%29.aspx?f=255&MSPPError=-2147217396
         /// </summary>
-        public static Version GetNetFxVersion()
-        {
-            const string subkey = @"SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full\";
-
-            using (RegistryKey ndpKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32).OpenSubKey(subkey))
-            {
-                if (ndpKey != null && ndpKey.GetValue("Release") != null)
-                {
-                    Version installedVersion = GetNet45Version((int)ndpKey.GetValue("Release"));
-
-                    return installedVersion;
-                }
-            }
-
-            // If we hit this we have .NET framework version < 4.5, return 4.0 for now
-            return new Version("4.0");
-        }
+//        public static Version GetNetFxVersion()
+//        {
+//            const string subkey = @"SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full\";
+//
+//            using (RegistryKey ndpKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32).OpenSubKey(subkey))
+//            {
+//                if (ndpKey != null && ndpKey.GetValue("Release") != null)
+//                {
+//                    Version installedVersion = GetNet45Version((int)ndpKey.GetValue("Release"));
+//
+//                    return installedVersion;
+//                }
+//            }
+//
+//            // If we hit this we have .NET framework version < 4.5, return 4.0 for now
+//            return new Version("4.0");
+//        }
 
         // Checking the version using >= will enable forward compatibility.
         private static Version GetNet45Version(int releaseKey)
