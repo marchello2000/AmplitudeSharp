@@ -28,8 +28,11 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
-        // Only call this once per lifetime of the object
-        analytics = AmplitudeService.Initialize("<YOUR API KEY>");
+        // Only call this once per lifetime of the object. The constructor defines
+        // an optional API region parameter that defines the region (data center)
+        // to use. Defaults to US
+        // Set the region to "eu" for the European data center
+        analytics = AmplitudeService.Initialize("<YOUR API KEY>", "(optional) <AMPLITUDE REGION>");
 
         base.OnStartup(e);
     }

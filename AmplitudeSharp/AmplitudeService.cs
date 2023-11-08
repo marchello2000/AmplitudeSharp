@@ -54,10 +54,10 @@ namespace AmplitudeSharp
         /// </summary>
         public Dictionary<string, object> ExtraEventProperties { get; private set; } = new Dictionary<string, object>();
 
-        private AmplitudeService(string apiKey)
+        private AmplitudeService(string apiKey, string apiRegion)
         {
             lockObject = new object();
-            api = new AmplitudeApi(apiKey);
+            api = new AmplitudeApi(apiKey, apiRegion);
             eventQueue = new List<IAmplitudeEvent>();
             cancellationToken = new CancellationTokenSource();
             eventsReady = new SemaphoreSlim(0);
@@ -70,28 +70,34 @@ namespace AmplitudeSharp
         }
 
         public void Dispose()
-        { 
+        {
             Uninitialize();
             s_instance = null;
         }
 
         /// <summary>
         /// Initialize AmplitudeSharp
-        /// Takes an API key for the project and, optionally, 
+        /// Takes an API key for the project and, optionally,
         /// a stream where offline/past events are stored
         /// </summary>
         /// <param name="apiKey">api key for the project to stream data to</param>
+        /// <param name="region">Amplitude region to use</param>
         /// <param name="persistenceStream">optinal, stream with saved event data <seealso cref="Uninitialize(Stream)"/></param>
         /// <param name="logger">Action delegate for logging purposes, if none is specified <see cref="System.Diagnostics.Debug.WriteLine(object)"/> is used</param>
         /// <returns></returns>
-        public static AmplitudeService Initialize(string apiKey, Action<LogLevel, string> logger = null, Stream persistenceStream = null)
+        public static AmplitudeService Initialize(string apiKey, string apiRegion = "us", Action<LogLevel, string> logger = null, Stream persistenceStream = null)
         {
             if (apiKey == "<YOUR_API_KEY>")
             {
                 throw new ArgumentOutOfRangeException(nameof(apiKey), "Please specify Amplitude API key");
             }
 
-            AmplitudeService instance = new AmplitudeService(apiKey);
+            if (apiRegion == null)
+            {
+                throw new ArgumentOutOfRangeException(nameof(apiRegion), "Please specify the Amplitude region to use");
+            }
+
+            AmplitudeService instance = new AmplitudeService(apiKey, apiRegion);
             instance.NewSession();
 
             if (Interlocked.CompareExchange(ref s_instance, instance, null) == null)

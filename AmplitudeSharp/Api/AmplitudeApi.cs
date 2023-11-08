@@ -27,12 +27,15 @@ namespace AmplitudeSharp.Api
     class AmplitudeApi : IAmplitudeApi
     {
         private string apiKey;
+        private string apiRegion;
+
         private HttpClient httpClient;
         private HttpClientHandler httpHandler;
 
-        public AmplitudeApi(string apiKey)
+        public AmplitudeApi(string apiKey, string apiRegion)
         {
             this.apiKey = apiKey;
+            this.apiRegion = apiRegion;
 
             httpHandler = new HttpClientHandler();
             httpHandler.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
@@ -49,9 +52,9 @@ namespace AmplitudeSharp.Api
                 httpHandler.Proxy = WebRequest.GetSystemWebProxy();
             }
             else
-            { 
+            {
                 httpHandler.Proxy.Credentials = new NetworkCredential(proxyUserName, proxyPassword);
-            }            
+            }
         }
 
         public override Task<SendResult> Identify(AmplitudeIdentify identification)
@@ -83,9 +86,13 @@ namespace AmplitudeSharp.Api
                 var data = new StringContent(paramData, UTF8Encoding.UTF8, "application/json");
                 content.Add(data, paramName);
 
+                var apiURL = "https://api.amplitude.com";
+                if (apiRegion == "eu")
+                    apiURL = "https://api.eu.amplitude.com";
+
                 try
                 {
-                    var postResult = await httpClient.PostAsync($"https://api.amplitude.com/{endPoint}", content);
+                    var postResult = await httpClient.PostAsync($"{apiURL}/{endPoint}", content);
 
                     if (postResult.StatusCode >= HttpStatusCode.InternalServerError)
                     {
