@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -13,25 +13,30 @@ namespace AmplitudeSharp
 {
     public class AmplitudeService : IDisposable
     {
-        public static AmplitudeService s_instance;
+        private static AmplitudeService s_instance;
         internal static Action<LogLevel, string> s_logger;
 
-        public static AmplitudeService Instance
-        {
-            get
-            {
-                return s_instance;
-            }
-        }
+        public static AmplitudeService Instance => s_instance;
 
-        private object lockObject;
-        private List<IAmplitudeEvent> eventQueue;
-        private CancellationTokenSource cancellationToken;
+        private readonly object lockObject;
+        private readonly List<IAmplitudeEvent> eventQueue;
+        private readonly CancellationTokenSource cancellationToken;
         private Thread sendThread;
-        private AmplitudeApi api;
+        private readonly AmplitudeApi api;
         private AmplitudeIdentify identification;
-        private SemaphoreSlim eventsReady;
-        private long sessionId;
+        private readonly SemaphoreSlim eventsReady;
+        private long sessionId = -1;
+        private readonly JsonSerializerSettings apiJsonSerializerSettings = new JsonSerializerSettings
+        {
+            NullValueHandling = NullValueHandling.Ignore,
+            Formatting = Formatting.None,
+        };
+        private readonly JsonSerializerSettings persistenceJsonSerializerSettings = new JsonSerializerSettings
+        {
+            TypeNameHandling = TypeNameHandling.Objects,
+            NullValueHandling = NullValueHandling.Ignore,
+            Formatting = Formatting.None,
+        };
 
         /// <summary>
         /// Sets Offline mode, which means the events are never sent to actual amplitude service
@@ -39,49 +44,37 @@ namespace AmplitudeSharp
         /// </summary>
         public bool OfflineMode
         {
-            get
-            {
-                return api.OfflineMode;
-            }
-            set
-            {
-                api.OfflineMode = value;
-            }
+            get => api.OfflineMode;
+            set => api.OfflineMode = value;
         }
 
         /// <summary>
         /// Additional properties to send with every event
         /// </summary>
-        public Dictionary<string, object> ExtraEventProperties { get; private set; } = new Dictionary<string, object>();
+        public Dictionary<string, object> ExtraEventProperties { get; } = new Dictionary<string, object>();
 
         private AmplitudeService(string apiKey)
         {
             lockObject = new object();
-            api = new AmplitudeApi(apiKey);
+            api = new AmplitudeApi(apiKey, apiJsonSerializerSettings);
             eventQueue = new List<IAmplitudeEvent>();
             cancellationToken = new CancellationTokenSource();
             eventsReady = new SemaphoreSlim(0);
-
-            JsonConvert.DefaultSettings = () => new JsonSerializerSettings()
-            {
-                NullValueHandling = NullValueHandling.Ignore,
-                Formatting = Formatting.None
-            };
         }
 
         public void Dispose()
-        { 
+        {
             Uninitialize();
             s_instance = null;
         }
 
         /// <summary>
         /// Initialize AmplitudeSharp
-        /// Takes an API key for the project and, optionally, 
+        /// Takes an API key for the project and, optionally,
         /// a stream where offline/past events are stored
         /// </summary>
         /// <param name="apiKey">api key for the project to stream data to</param>
-        /// <param name="persistenceStream">optinal, stream with saved event data <seealso cref="Uninitialize(Stream)"/></param>
+        /// <param name="persistenceStream">optional, stream with saved event data <seealso cref="Uninitialize(Stream)"/></param>
         /// <param name="logger">Action delegate for logging purposes, if none is specified <see cref="System.Diagnostics.Debug.WriteLine(object)"/> is used</param>
         /// <returns></returns>
         public static AmplitudeService Initialize(string apiKey, Action<LogLevel, string> logger = null, Stream persistenceStream = null)
@@ -179,21 +172,13 @@ namespace AmplitudeSharp
             sessionId = DateTime.UtcNow.ToUnixEpoch();
         }
 
-        /// <summary>
-        /// Log an event without any parameters
-        /// </summary>
-        /// <param name="eventName">the name of the event</param>
-        public void Track(string eventName)
-        {
-            Track(eventName, null);
-        }
 
         /// <summary>
         /// Log an event with parameters
         /// </summary>
         /// <param name="eventName">the name of the event</param>
         /// <param name="properties">parameters for the event (this can just be a dynamic class)</param>
-        public void Track(string eventName, object properties)
+        public void Track(string eventName, object properties = null )
         {
             var identification = this.identification;
 
@@ -201,11 +186,11 @@ namespace AmplitudeSharp
             {
                 AmplitudeEvent e = new AmplitudeEvent(eventName, properties, ExtraEventProperties)
                 {
-                    SessionId = sessionId
+                    SessionId = sessionId,
+                    UserId = identification.UserId,
+                    DeviceId = identification.DeviceId,
                 };
 
-                e.UserId = identification.UserId;
-                e.DeviceId = identification.DeviceId;
                 QueueEvent(e);
             }
             else
@@ -233,7 +218,7 @@ namespace AmplitudeSharp
             {
                 try
                 {
-                    string persistedData = JsonConvert.SerializeObject(eventQueue, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.Objects });
+                    string persistedData = JsonConvert.SerializeObject(eventQueue, persistenceJsonSerializerSettings);
                     using (var writer = new StreamWriter(persistenceStore))
                     {
                         writer.Write(persistedData);
@@ -241,7 +226,7 @@ namespace AmplitudeSharp
                 }
                 catch (Exception e)
                 {
-                    AmplitudeService.s_logger(LogLevel.Error, $"Failed to persist events: {e.ToString()}");
+                    AmplitudeService.s_logger(LogLevel.Error, $"Failed to persist events: {e}");
                 }
             }
         }
@@ -253,7 +238,7 @@ namespace AmplitudeSharp
                 using (var reader = new StreamReader(persistenceStore))
                 {
                     string persistedData = reader.ReadLine();
-                    var data = JsonConvert.DeserializeObject<List<IAmplitudeEvent>>(persistedData, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.Objects });
+                    var data = JsonConvert.DeserializeObject<List<IAmplitudeEvent>>(persistedData, persistenceJsonSerializerSettings);
 
                     eventQueue.InsertRange(0, data);
                     eventsReady.Release();
@@ -261,7 +246,7 @@ namespace AmplitudeSharp
             }
             catch (Exception e)
             {
-                AmplitudeService.s_logger(LogLevel.Error, $"Failed to load persisted events: {e.ToString()}");
+                s_logger(LogLevel.Error, $"Failed to load persisted events: {e}");
             }
         }
 
@@ -270,9 +255,11 @@ namespace AmplitudeSharp
         /// </summary>
         private void StartSendThread()
         {
-            sendThread = new Thread(UploadThread);
-            sendThread.Name = $"{nameof(AmplitudeSharp)} Upload Thread";
-            sendThread.Priority = ThreadPriority.BelowNormal;
+            sendThread = new Thread(UploadThread)
+            {
+                Name = $"{nameof(AmplitudeSharp)} Upload Thread",
+                Priority = ThreadPriority.BelowNormal,
+            };
             sendThread.Start();
         }
 
@@ -357,7 +344,7 @@ namespace AmplitudeSharp
             catch (Exception e)
             {
                 // No matter what exception happens, we just quit
-                s_logger(LogLevel.Error, "Upload thread terminated with: " + e.ToString());
+                s_logger(LogLevel.Error, "Upload thread terminated with: " + e);
             }
         }
     }

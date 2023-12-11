@@ -79,7 +79,8 @@ namespace AmplitudeSharp
             OSVersion = deviceHelper.OSVersion;
             DeviceModel = deviceHelper.Model;
             DeviceManufacturer = deviceHelper.Manufacturer;
-            NetFrameworkVersion = NetFxHelper.GetNetFxVersion().ToString();
+            // TODO(revive): Revive this once .NET Core 3.0 is released
+//            NetFrameworkVersion = NetFxHelper.GetNetFxVersion().ToString();
             RamMbs = deviceHelper.RamMbs;
             Is64BitDevice = deviceHelper.Is64BitDevice;
             Language = Thread.CurrentThread.CurrentUICulture.EnglishName;
